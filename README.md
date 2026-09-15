@@ -1,6 +1,6 @@
 
 
-## Project Overview
+# Project Overview
 
 "QuizPulse" — an online quiz platform with a React frontend and a FastAPI/SQLAlchemy backend, communicating over JSON. The app lives in `quiz-rebuild/` (a renamed copy of the original `backend/` + `frontend/`).
 
@@ -57,3 +57,24 @@ The committed `quizapp.db` is generated; it is gitignored (untracked) but presen
 
 - The root-level `backend/` and `frontend/` directories have been deleted (moved into `quiz-rebuild/`); git still has them staged for deletion until committed.
 - `node_modules/`, `__pycache__/`, `.venv/`, `venv/`, `.DS_Store`, and `*.db` are not tracked in git. `node_modules` and `__pycache__` were previously committed — see `.gitignore` (currently only ignores `.DS_Store`).
+
+
+## Project Summary:
+QuizPulse — Online Quiz Platform
+
+What it is: A full-stack web application fith user authentication, results tracking,and feedback.
+
+Core Features
+
+Authentication & User Management
+- User registration and login (JWT tokens)
+- Protected routes requiring authentication
+- User profile with quiz history
+
+Quiz System
+- Browse quizzes organized by categories (Mathematics, Computer Fundamentals, General Science)
+- Timed quizzes (configurable time limits
+- Multiple-choice questions with 4 options each
+- Real-time quiz submission and scoring
+- Results calculated as percentage (correct/total × 100)
+
