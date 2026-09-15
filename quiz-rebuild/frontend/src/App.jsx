@@ -13,6 +13,8 @@ import Feedback from './pages/Feedback';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
+import QuizDashboard from './pages/QuizDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Protected Route Guard
 const ProtectedRoute = ({ children }) => {
@@ -83,6 +85,12 @@ function App() {
               </PublicOnlyRoute>
             }
           />
+
+          {/* Quiz Dashboard */}
+          <Route path="/quiz-dashboard" element={<QuizDashboard />} />
+
+          {/* Admin */}
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
 
           {/* Protected Routes */}
           <Route

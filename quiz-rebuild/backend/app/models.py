@@ -13,6 +13,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
 
     quiz_results = relationship("QuizResult", back_populates="user", cascade="all, delete-orphan")
@@ -24,6 +25,10 @@ class Category(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
+    year = Column(String, nullable=True)
+    semester = Column(String, nullable=True)
+    course_code = Column(String, index=True, nullable=True)
+    course_title = Column(String, nullable=True)
 
     quizzes = relationship("Quiz", back_populates="category", cascade="all, delete-orphan")
 
@@ -34,6 +39,7 @@ class Quiz(Base):
     title = Column(String, nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"))
     time_limit_minutes = Column(Integer, default=5)
+    quiz_type = Column(String, nullable=False, default="Practice Quiz")
 
     category = relationship("Category", back_populates="quizzes")
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")

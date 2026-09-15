@@ -26,6 +26,7 @@ export default function Navbar() {
         {user ? (
           <>
             <li><Link to="/profile">Profile ({user.username})</Link></li>
+            {user?.is_admin && <li><Link to="/admin" style={{ color: '#e94560', fontWeight: 600 }}>Admin Dashboard</Link></li>}
             <li><button onClick={handleLogout} className="btn btn-secondary">Logout</button></li>
           </>
         ) : (

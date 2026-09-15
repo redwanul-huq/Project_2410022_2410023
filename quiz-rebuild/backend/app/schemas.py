@@ -20,6 +20,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
+    is_admin: bool = False
     created_at: datetime
 
     class Config:
@@ -29,6 +30,7 @@ class UserResponse(BaseModel):
 class OptionResponse(BaseModel):
     id: int
     text: str
+    is_correct: bool = False
 
     class Config:
         from_attributes = True
@@ -48,6 +50,7 @@ class QuizListResponse(BaseModel):
     title: str
     time_limit_minutes: int
     category_id: int
+    quiz_type: str = "Practice Quiz"
 
     class Config:
         from_attributes = True
@@ -56,6 +59,7 @@ class QuizDetailResponse(BaseModel):
     id: int
     title: str
     time_limit_minutes: int
+    quiz_type: str = "Practice Quiz"
     questions: List[QuestionResponse]
 
     class Config:
@@ -66,10 +70,22 @@ class CategoryResponse(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
+    year: Optional[str] = None
+    semester: Optional[str] = None
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
     quizzes: List[QuizListResponse]
 
     class Config:
         from_attributes = True
+
+class CategoryCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    year: Optional[str] = None
+    semester: Optional[str] = None
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
 
 # Quiz Submission Schema
 class AnswerSubmit(BaseModel):
@@ -89,6 +105,32 @@ class QuizResultResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Admin Schemas
+class AdminUserCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=6)
+    is_admin: bool = False
+
+class QuizCreate(BaseModel):
+    title: str
+    category_id: int
+    quiz_type: str = "Practice Quiz"
+    time_limit_minutes: int = 5
+
+class QuestionCreate(BaseModel):
+    text: str
+    options: List[dict]  # each has text and is_correct
+
+class AdminQuestionCreate(BaseModel):
+    quiz_id: int
+    text: str
+    options: List[AdminOptionCreate]  # text + is_correct, no required id
+
+class AdminOptionCreate(BaseModel):
+    text: str
+    is_correct: bool = False
 
 # Feedback Schema
 class FeedbackCreate(BaseModel):

@@ -6,6 +6,7 @@ from typing import List
 
 from app import models, schemas, auth
 from app.database import engine, get_db
+from fastapi import Depends
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -194,3 +195,105 @@ def get_feedbacks(db: Session = Depends(get_db)):
             username=fb.user.username if fb.user else "Anonymous",
         ) for fb in feedbacks
     ]
+
+
+# --- Admin Endpoints ---
+
+@app.get("/api/admin/users", response_model=List[schemas.UserResponse], dependencies=[Depends(auth.get_current_admin_user)])
+def admin_list_users(db: Session = Depends(get_db)):
+    return db.query(models.User).all()
+
+@app.post("/api/admin/users", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(auth.get_current_admin_user)])
+def admin_create_user(user: schemas.AdminUserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    db_username = db.query(models.User).filter(models.User.username == user.username).first()
+    if db_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    hashed_pw = auth.get_password_hash(user.password)
+    new_user = models.User(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_pw,
+        is_admin=user.is_admin
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.delete("/api/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(auth.get_current_admin_user)])
+def admin_delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+
+@app.post("/api/admin/courses", response_model=schemas.CategoryResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(auth.get_current_admin_user)])
+def admin_create_course(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
+    db_cat = db.query(models.Category).filter(models.Category.name == category.name).first()
+    if db_cat:
+        raise HTTPException(status_code=400, detail="Category name already exists")
+    new_cat = models.Category(
+        name=category.name,
+        description=category.description,
+        year=category.year,
+        semester=category.semester,
+        course_code=category.course_code,
+        course_title=category.course_title
+    )
+    db.add(new_cat)
+    db.commit()
+    db.refresh(new_cat)
+    return new_cat
+
+@app.get("/api/admin/courses", response_model=List[schemas.CategoryResponse], dependencies=[Depends(auth.get_current_admin_user)])
+def admin_list_courses(db: Session = Depends(get_db)):
+    return db.query(models.Category).all()
+
+@app.post("/api/admin/quizzes", response_model=schemas.QuizDetailResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(auth.get_current_admin_user)])
+def admin_create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(get_db)):
+    cat = db.query(models.Category).filter(models.Category.id == quiz.category_id).first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    new_quiz = models.Quiz(
+        title=quiz.title,
+        category_id=quiz.category_id,
+        quiz_type=quiz.quiz_type,
+        time_limit_minutes=quiz.time_limit_minutes
+    )
+    db.add(new_quiz)
+    db.commit()
+    db.refresh(new_quiz)
+    return new_quiz
+
+@app.delete("/api/admin/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(auth.get_current_admin_user)])
+def admin_delete_question(question_id: int, db: Session = Depends(get_db)):
+    q = db.query(models.Question).filter(models.Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+    db.delete(q)
+    db.commit()
+
+@app.post("/api/admin/questions", response_model=schemas.QuestionResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(auth.get_current_admin_user)])
+def admin_create_question(question_data: schemas.AdminQuestionCreate, db: Session = Depends(get_db)):
+    quiz = db.query(models.Quiz).filter(models.Quiz.id == question_data.quiz_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    new_q = models.Question(text=question_data.text, quiz_id=question_data.quiz_id)
+    db.add(new_q)
+    db.commit()
+    db.refresh(new_q)
+    # Add options (accept text/is_correct payload; id optional/ignored)
+    for opt in question_data.options:
+        new_opt = models.Option(
+            text=opt.text if hasattr(opt, 'text') else opt.get('text'),
+            is_correct=opt.is_correct if hasattr(opt, 'is_correct') else opt.get('is_correct'),
+            question_id=new_q.id
+        )
+        db.add(new_opt)
+    db.commit()
+    db.refresh(new_q)
+    return new_q
